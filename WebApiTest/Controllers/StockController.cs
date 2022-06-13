@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using WebApiTest.Model;
@@ -7,7 +8,8 @@ namespace WebApiTest.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [ServiceFilter(typeof(FixedToken))]
+    [Authorize]
+    //[ServiceFilter(typeof(FixedToken))]  ,因已在MiddleWare中設定
     public class StockController : ControllerBase
     {
         private readonly StockServices _services;

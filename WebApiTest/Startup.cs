@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -11,6 +12,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApiTest.Model;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace WebApiTest
 {
@@ -30,6 +33,32 @@ namespace WebApiTest
             services.AddScoped<ApiExceptionFilter>();
             services.AddScoped<FixedToken>();
             services.AddScoped<VerifyUser>();
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
+                    options =>
+                    {
+                        //驗證fail時,是否回應詳細訊息
+                        options.IncludeErrorDetails = true;
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            NameClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier",
+                            RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
+
+                            //驗證Issuer
+                            ValidateIssuer = true,
+                            ValidIssuer = Configuration.GetValue<string>("JwtSettings:Issuer"),
+
+                            //關閉驗證Audience
+                            ValidateAudience=false,
+
+                            //驗證有效時間
+                            ValidateLifetime=true,
+                            ValidateIssuerSigningKey=true,
+                            IssuerSigningKey= new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.GetValue<string>("JwtSettings:SignatureSecretKey")))
+
+                    };
+                    }
+                );
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,6 +72,9 @@ namespace WebApiTest
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+        //驗證身分
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
